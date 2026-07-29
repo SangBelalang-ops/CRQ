@@ -1,0 +1,7 @@
+cek-rekening-qris/
+├── public/
+│   └── index.html      <-- Tampilan halaman web (Frontend)
+├── api/
+│   └── check.js        <-- Skrip penghubung API QRIS MVP (Backend serverless)
+├── package.json        <-- Konfigurasi projek & dependencies
+└── .env                <-- Tempat menyimpan API Key rahasia (aman)
