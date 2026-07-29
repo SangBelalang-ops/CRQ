@@ -2,70 +2,48 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cek Rekening Validasi</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        #result { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 5px; display: none; }
-    </style>
+    <title>QRIS MVP Bulk Account Checker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-light p-5">
+    <div class="container bg-white p-4 rounded shadow-sm">
+        <h3 class="mb-3">Checker Rekening QRIS MVP</h3>
+        <textarea id="inputData" class="form-control mb-3" rows="6" placeholder="Format: BANK_CODE, NOMOR_REKENING (1 per baris)&#10;Contoh: 165, 08577215555"></textarea>
+        <button onclick="processCheck()" class="btn btn-primary">Validasi Sekarang</button>
+        
+        <div id="resultArea" class="mt-4"></div>
+    </div>
 
-<div class="card">
-    <h2>Cek Validasi Rekening</h2>
-    <label>Pilih Bank:</label>
-    <select id="bankCode">
-        <option value="bca">BCA</option>
-        <option value="bni">BNI</option>
-        <option value="bri">BRI</option>
-        <option value="mandiri">Mandiri</option>
-    </select>
+    <script>
+        async function processCheck() {
+            const raw = document.getElementById('inputData').value;
+            const lines = raw.split('\n');
+            const accounts = [];
 
-    <label>Nomor Rekening:</label>
-    <input type="text" id="accountNumber" placeholder="Masukkan nomor rekening">
-
-    <button onclick="cekRekening()">Cek Nama Pemilik</button>
-
-    <div id="result"></div>
-</div>
-
-<script>
-    async function cekRekening() {
-        const bankCode = document.getElementById('bankCode').value;
-        const accountNumber = document.getElementById('accountNumber').value;
-        const resultDiv = document.getElementById('result');
-
-        if (!accountNumber) {
-            alert('Masukkan nomor rekening terlebih dahulu!');
-            return;
-        }
-
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = 'Memeriksa...';
-
-        try {
-            const response = await fetch('/api/check-account', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bankCode, accountNumber })
+            lines.forEach(line => {
+                const parts = line.split(',');
+                if(parts.length >= 2) {
+                    accounts.push({
+                        bankCode: parts[0].trim(),
+                        accountNumber: parts[1].trim()
+                    });
+                }
             });
 
-            const result = await response.json();
+            const res = await fetch('/api/check-accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accounts })
+            });
 
-            if (result.success) {
-                resultDiv.innerHTML = `<strong>Pemilik:</strong> ${result.data.account_name}`;
-            } else {
-                resultDiv.innerHTML = `<span style="color:red;">${result.message}</span>`;
-            }
-        } catch (err) {
-            resultDiv.innerHTML = `<span style="color:red;">Terjadi kesalahan koneksi sistem.</span>`;
+            const data = await res.json();
+            let html = '<table class="table table-bordered"><thead><tr><th>Bank</th><th>No Rekening</th><th>Nama Pemilik</th></tr></thead><tbody>';
+            data.results.forEach(r => {
+                html += `<tr><td>${r.bank}</td><td>${r.account}</td><td>${r.accountName}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('resultArea').innerHTML = html;
         }
-    }
-</script>
-
+    </script>
 </body>
 </html>
