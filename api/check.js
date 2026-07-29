@@ -1,39 +1,55 @@
 const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-require('dotenv').config();
+const fetch = require('node-fetch');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Endpoint backend untuk cek rekening
-app.post('/api/check-account', async (req, res) => {
-    const { bankCode, accountNumber } = req.body;
+// Endpoint API untuk cek massal
+app.post('/api/check-accounts', async (req, res) => {
+    const { accounts } = req.body; // Array list rekening
+    const results = [];
 
-    try {
-        // Ganti URL endpoint dan header sesuai dokumentasi resmi QRIS MVP kamu
-        const response = await axios.post('https://api.qris-mvp.com/v1/inquiry', {
-            bank_code: bankCode,
-            account_number: accountNumber
-        }, {
-            headers: {
-                'Authorization': `Bearer ${process.env.QRIS_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+    for (let item of accounts) {
+        try {
+            // Sesuaikan endpoint & payload header dengan target QRIS MVP temanmu
+            const response = await fetch('http://qrismvp.s3-website-ap-southeast-1.amazonaws.com/api/inquiry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': 'Bearer TOKEN_KAMU_DISINI' // Tambahkan token jika diperlukan
+                },
+                body: JSON.stringify({
+                    bank_code: item.bankCode,
+                    account_number: item.accountNumber
+                })
+            });
 
-        res.json({
-            success: true,
-            data: response.data
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.response?.data?.message || 'Gagal mengecek rekening'
-        });
+            const data = await response.json();
+            results.push({
+                bank: item.bankCode,
+                account: item.accountNumber,
+                status: data.status || 'SUCCESS',
+                accountName: data.account_name || 'TIDAK DITEMUKAN'
+            });
+        } catch (err) {
+            results.push({
+                bank: item.bankCode,
+                account: item.accountNumber,
+                status: 'ERROR',
+                accountName: 'Rekening Invalid / Gagal'
+            });
+        }
     }
+
+    res.json({ results });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
+module.exports = app;
+
+// Jalankan local jika tidak di Vercel
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.0 || 3000;
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
