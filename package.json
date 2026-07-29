@@ -1,15 +1,13 @@
 {
-  "name": "cek-rekening-qris",
+  "name": "qris-checker",
   "version": "1.0.0",
-  "description": "Website validasi rekening QRIS MVP",
-  "main": "api/check.js",
-  "scripts": {
-    "start": "node api/check.js"
+  "description": "QRIS MVP Bulk Account Checker",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18.x"
   },
   "dependencies": {
-    "axios": "^1.7.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
   }
 }
