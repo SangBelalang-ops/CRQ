@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Rekening Validasi</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Cek Validasi Rekening</h2>
+    <label>Pilih Bank:</label>
+    <select id="bankCode">
+        <option value="bca">BCA</option>
+        <option value="bni">BNI</option>
+        <option value="bri">BRI</option>
+        <option value="mandiri">Mandiri</option>
+    </select>
+
+    <label>Nomor Rekening:</label>
+    <input type="text" id="accountNumber" placeholder="Masukkan nomor rekening">
+
+    <button onclick="cekRekening()">Cek Nama Pemilik</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    async function cekRekening() {
+        const bankCode = document.getElementById('bankCode').value;
+        const accountNumber = document.getElementById('accountNumber').value;
+        const resultDiv = document.getElementById('result');
+
+        if (!accountNumber) {
+            alert('Masukkan nomor rekening terlebih dahulu!');
+            return;
+        }
+
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = 'Memeriksa...';
+
+        try {
+            const response = await fetch('/api/check-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bankCode, accountNumber })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                resultDiv.innerHTML = `<strong>Pemilik:</strong> ${result.data.account_name}`;
+            } else {
+                resultDiv.innerHTML = `<span style="color:red;">${result.message}</span>`;
+            }
+        } catch (err) {
+            resultDiv.innerHTML = `<span style="color:red;">Terjadi kesalahan koneksi sistem.</span>`;
+        }
+    }
+</script>
+
+</body>
+</html>
